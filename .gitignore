@@ -1,0 +1,41 @@
+# ── Secrets — NEVER commit ──────────────────────────────────
+**/.env
+*.env
+.flaskenv
+paper_trading/local_config.py
+**/*.key
+**/db/*.db
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/*.db-journal
+**/*.duckdb
+**/*.sqlite
+
+# Disabled nested git repos (backups from vendoring)
+**/_git_backup/
+
+# ── Trading data / runtime logs ─────────────────────────────
+paper_trading/trade_log.json
+paper_trading/trades.json
+**/*.log
+**/*.jsonl
+tradingview-mcp/screenshots/
+
+# ── Python ──────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# ── Node ────────────────────────────────────────────────────
+node_modules/
+
+# ── Editor / OS ─────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

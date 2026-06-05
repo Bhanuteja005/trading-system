@@ -22,9 +22,20 @@ from datetime import datetime
 import requests
 import pytz
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 OPENALGO_URL = "http://127.0.0.1:5000"
-API_KEY      = "97c565e461be8600e2633bd83e4a9907b96356065a5f485c24b1e966a63a6be3"
+# API key is loaded from local_config.py (gitignored) or the OPENALGO_API_KEY
+# environment variable — never hardcode it here.
+try:
+    from local_config import OPENALGO_API_KEY as API_KEY
+except ImportError:
+    API_KEY = os.environ.get("OPENALGO_API_KEY", "")
 STRATEGY     = "ClaudeTrader"
+
+if not API_KEY:
+    sys.exit("ERROR: No OpenAlgo API key. Create paper_trading/local_config.py "
+             "(copy from local_config.example.py) or set OPENALGO_API_KEY env var.")
 IST          = pytz.timezone("Asia/Kolkata")
 LOG_FILE     = os.path.join(os.path.dirname(__file__), "trade_log.json")
 FETCH_MJS    = os.path.join(os.path.dirname(__file__), "fetch_price.mjs")
