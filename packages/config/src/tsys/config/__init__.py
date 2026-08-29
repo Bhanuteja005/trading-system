@@ -13,6 +13,7 @@ from functools import lru_cache
 
 from pydantic import BaseModel, ConfigDict
 
+from .analyst import AnalystSettings
 from .base import REPO_ROOT, BaseSettingsBlock, Mode
 from .broker import BrokerSettings
 from .risk import LOT_SIZES, RiskSettings
@@ -23,6 +24,7 @@ class Settings(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     base: BaseSettingsBlock
+    analyst: AnalystSettings
     broker: BrokerSettings
     tradingview: TradingViewSettings
     risk: RiskSettings
@@ -45,6 +47,7 @@ def get_settings() -> Settings:
     """Build once per process. Cached, so config is read exactly once."""
     return Settings(
         base=BaseSettingsBlock(),
+        analyst=AnalystSettings(),
         broker=BrokerSettings(),
         tradingview=TradingViewSettings(),
         risk=RiskSettings(),
@@ -56,6 +59,7 @@ settings = get_settings()
 __all__ = [
     "LOT_SIZES",
     "REPO_ROOT",
+    "AnalystSettings",
     "BaseSettingsBlock",
     "BrokerSettings",
     "Mode",

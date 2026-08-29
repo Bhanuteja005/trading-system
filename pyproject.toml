@@ -3,7 +3,8 @@
 # with its own pyproject/.venv and must not be refactored or co-resolved.
 [tool.uv.workspace]
 members = ["packages/config", "packages/core", "packages/domain", "packages/broker",
-           "packages/tvclient", "packages/journal", "packages/executor", "apps/*"]
+           "packages/tvclient", "packages/journal", "packages/executor",
+           "packages/analyst", "apps/*"]
 exclude = ["packages/openalgo", "monorepo"]
 
 [tool.uv.sources]
@@ -13,6 +14,7 @@ tsys-domain = { workspace = true }
 tsys-broker = { workspace = true }
 tsys-tvclient = { workspace = true }
 tsys-journal = { workspace = true }
+tsys-analyst = { workspace = true }
 
 [tool.ruff]
 line-length = 100

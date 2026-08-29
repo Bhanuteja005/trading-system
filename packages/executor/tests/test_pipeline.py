@@ -6,6 +6,7 @@ from datetime import datetime
 from pydantic import SecretStr
 from tsys.broker import BrokerClient, IdempotencyLedger
 from tsys.config import (
+    AnalystSettings,
     BaseSettingsBlock,
     BrokerSettings,
     Mode,
@@ -51,6 +52,7 @@ class FakeSession:
 def build(tmp_path, snapshot, *, mode=Mode.PAPER, error=None, session=None):
     settings = Settings(
         base=BaseSettingsBlock(TSYS_DATA_DIR=tmp_path),
+        analyst=AnalystSettings(),
         broker=BrokerSettings(OPENALGO_API_KEY=SecretStr("k")),
         tradingview=TradingViewSettings(TV_MIN_BARS=50),
         risk=RiskSettings(TSYS_MODE=mode, TSYS_KILL_FILE=tmp_path / "KILL"),
