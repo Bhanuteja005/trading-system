@@ -1,0 +1,15 @@
+[project]
+name = "tsys-app-trader-cli"
+version = "0.1.0"
+description = "Manual order entry and the legacy monitor loop."
+requires-python = ">=3.12"
+dependencies = ["tsys-config", "tsys-core", "tsys-domain", "tsys-broker", "requests>=2.31"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Entry-point scripts rather than an importable package, so there is no
+# package directory for hatchling to discover.
+[tool.hatch.build.targets.wheel]
+bypass-selection = true

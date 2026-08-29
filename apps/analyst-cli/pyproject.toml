@@ -1,0 +1,15 @@
+[project]
+name = "tsys-app-analyst-cli"
+version = "0.1.0"
+description = "Ask Claude for a call, paper-trade it, score it later."
+requires-python = ">=3.12"
+dependencies = ["tsys-config", "tsys-core", "tsys-domain", "tsys-tvclient", "tsys-analyst"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Entry-point scripts rather than an importable package, so there is no
+# package directory for hatchling to discover.
+[tool.hatch.build.targets.wheel]
+bypass-selection = true

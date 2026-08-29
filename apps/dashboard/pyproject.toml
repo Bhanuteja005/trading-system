@@ -1,0 +1,15 @@
+[project]
+name = "tsys-app-dashboard"
+version = "0.1.0"
+description = "Read-mostly dashboard over the journal, config and broker."
+requires-python = ">=3.12"
+dependencies = ["tsys-config", "tsys-core", "tsys-journal", "flask>=3.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Entry-point scripts rather than an importable package, so there is no
+# package directory for hatchling to discover.
+[tool.hatch.build.targets.wheel]
+bypass-selection = true

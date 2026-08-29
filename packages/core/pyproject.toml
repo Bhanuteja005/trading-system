@@ -3,7 +3,9 @@ name = "tsys-core"
 version = "0.1.0"
 description = "Cross-cutting infrastructure: logging, clock, ids, errors, retry."
 requires-python = ">=3.12"
-dependencies = ["tsys-domain"]
+# tzdata: zoneinfo has no system tz database on Windows, and many
+# containers ship without one either. IST is not optional here.
+dependencies = ["tsys-domain", "tzdata>=2024.1"]
 
 [build-system]
 requires = ["hatchling"]
