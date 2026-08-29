@@ -37,8 +37,10 @@ if not API_KEY:
     sys.exit("ERROR: No OpenAlgo API key. Create paper_trading/local_config.py "
              "(copy from local_config.example.py) or set OPENALGO_API_KEY env var.")
 IST          = pytz.timezone("Asia/Kolkata")
-LOG_FILE     = os.path.join(os.path.dirname(__file__), "trade_log.json")
-FETCH_MJS    = os.path.join(os.path.dirname(__file__), "fetch_price.mjs")
+LOG_FILE     = os.path.join(_REPO_ROOT, "data", "trade_log.json")
+_REPO_ROOT   = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+FETCH_MJS    = os.path.join(_REPO_ROOT, "packages", "tradingview-mcp",
+                            "scripts", "legacy", "fetch_price.mjs")
 POLL_SECS    = 20   # price check interval
 
 

@@ -10,8 +10,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 app = Flask(__name__, static_folder=".")
 
-TRADES_FILE   = os.path.join(os.path.dirname(__file__), "trades.json")
-FETCHER_PATH  = os.path.join(os.path.dirname(__file__), "fetch_price.mjs")
+_REPO_ROOT    = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+FETCHER_PATH  = os.path.join(_REPO_ROOT, "packages", "tradingview-mcp",
+                             "scripts", "legacy", "fetch_price.mjs")
+TRADES_FILE   = os.path.join(_REPO_ROOT, "data", "trades.json")
 
 # OpenAlgo live price (accurate Angel One feed)
 # The API key is loaded from local_config.py (gitignored) or the OPENALGO_API_KEY

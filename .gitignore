@@ -2,7 +2,7 @@
 **/.env
 *.env
 .flaskenv
-paper_trading/local_config.py
+**/local_config.py
 **/*.key
 **/db/*.db
 **/*.db
@@ -16,11 +16,12 @@ paper_trading/local_config.py
 **/_git_backup/
 
 # ── Trading data / runtime logs ─────────────────────────────
-paper_trading/trade_log.json
-paper_trading/trades.json
+data/
+**/trade_log.json
+**/trades.json
 **/*.log
 **/*.jsonl
-tradingview-mcp/screenshots/
+packages/tradingview-mcp/screenshots/
 
 # ── Python ──────────────────────────────────────────────────
 __pycache__/
@@ -42,3 +43,4 @@ Thumbs.db
 
 # Structural reference repo (separate git repo, has its own .env) — never commit
 monorepo/
+.env
