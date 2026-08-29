@@ -13,7 +13,18 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
+# packages/config/src/tsys/config/base.py -> up 5 to the repo root.
+# Anchored on a marker file so a moved package fails loudly instead of
+# silently resolving data/ and the kill switch to the wrong directory.
+def _find_repo_root() -> Path:
+    here = Path(__file__).resolve()
+    for candidate in here.parents:
+        if (candidate / "pyproject.toml").exists() and (candidate / "packages").is_dir():
+            return candidate
+    raise RuntimeError(f"could not locate the repo root above {here}")
+
+
+REPO_ROOT = _find_repo_root()
 
 
 class Mode(StrEnum):
