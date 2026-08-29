@@ -2,7 +2,9 @@
   "mcpServers": {
     "tradingview": {
       "command": "node",
-      "args": ["C:/Users/pashi/Downloads/Trading-bots/tradingview-mcp/src/server.js"]
+      "args": [
+        "C:/Users/pashi/Downloads/Trading-bots/packages/tradingview-mcp/src/server.js"
+      ]
     }
   }
 }
