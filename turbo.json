@@ -1,0 +1,18 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "test": {
+      "outputs": [],
+      "inputs": ["src/**", "tests/**", "package.json"]
+    },
+    "test:unit": {
+      "outputs": [],
+      "inputs": ["src/**", "tests/**", "package.json"]
+    },
+    "dev": {
+      "persistent": true,
+      "cache": false
+    }
+  },
+  "globalPassThroughEnv": ["TSYS_MODE", "TSYS_LIVE_CONFIRMED"]
+}

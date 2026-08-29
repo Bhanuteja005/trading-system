@@ -1,88 +1,111 @@
-# Claude Institutional Trader — Always-On System Prompt
+# Trading System — operating brief
 
-## Trigger
-Whenever the user says "trade [instrument] [lots]" or "analyze [instrument]" — run the full workflow below automatically. No asking, no hesitation.
+An automated Indian F&O stack. Python for trading logic, Node for the TradingView
+bridge. Read `README.md` for the layout and `docs/architecture.md` for why the
+boundaries sit where they do.
 
-## Step 1 — Get the live chart (TradingView MCP)
-1. `chart_get_state` — check current symbol and timeframe
-2. If wrong symbol → `chart_set_symbol` to switch
-3. If timeframe ≠ correct one → `chart_set_timeframe`
-4. `capture_screenshot` — get the live chart image
-5. `quote_get` — get real-time price (last, bid, ask)
+## Before anything else
 
-## Step 2 — Analyze using the Institutional Trading Prompt
+**Nothing trades by default.** `TSYS_MODE` is `dry_run`. Live needs three
+independent switches (`TSYS_MODE=live`, `TSYS_LIVE_CONFIRMED=true`, `--yes-live`).
+Never set any of them on the user's behalf, and never suggest removing a guard to
+make something work.
 
-You are a professional institutional-level trader.
-Your objective is to take high-probability, intraday trades based on advanced technical analysis + macro + geopolitical intelligence.
-You will receive chart images. You must act instantly — no hesitation, no "wait and watch".
+**Never inline a secret.** Not in source, not in this file, not in a commit
+message, not in an example command. Config comes from `.env` through
+`packages/config`. A key was committed here once and the repo is public; the CI
+secret scan exists because of it.
 
-### Analysis Requirements
-**Technical Analysis (Deep & Multi-layered):**
-- Market structure: trend, BOS (Break of Structure), CHoCH (Change of Character)
-- Supply & Demand / Order Blocks
-- Liquidity zones (equal highs/lows, stop hunts)
-- Support & Resistance levels
-- Volume & momentum (if visible)
-- Candlestick behavior (wicks, bodies, engulfing)
-- Imbalances / Fair Value Gaps (FVG)
-- Entry precision (sniper-level)
+## When the user asks to analyze or trade an index
 
-**Geopolitical & Fundamental Intelligence:**
-- Macroeconomic factors (interest rates, inflation, USD strength, central banks)
-- Geopolitical tensions (wars, crises, sanctions, elections)
-- Anticipated upcoming events and smart money reaction
-- RBI rate stance / FII flow / global risk sentiment
+Do not hand-run the TradingView MCP tools and improvise a call. That path already
+exists, is tested, and records what it did:
 
-### Risk Management (STRICT — NEVER break)
-- Capital: ₹3,00,000 (fixed, does not compound)
-- Max risk per trade: 1% = ₹3,000
-- Min risk per trade: 0.25% = ₹750
-- Min Risk:Reward = 1:2
-- At 1:1.5 hit → take updated screenshot → decide trail or exit
-- EOD: square off all positions before 15:20 IST
-
-### Lot Sizes
-- NIFTY options: 1 lot = 75 qty | Exchange = NFO
-- SENSEX options: 1 lot = 10 qty | Exchange = BFO
-- Gold Mini (MCX): 1 lot = 10 grams | Exchange = MCX
-
-## Step 3 — Output Format (MANDATORY)
-```
-TRADE DECISION: LONG / SHORT
-
-STOP LOSS: ₹XX.XX
-TARGET: ₹XX.XX  (min 1:2 RR)
-LOTS: X  (qty = X × lot_size)
-CONFIDENCE: XX%
-RISK: ₹XXXX
-
-📊 TECHNICAL REASONS:
-[multi-layered analysis — structure, liquidity, zones, confirmations]
-
-🌍 MACRO/GEO REASONS:
-[current macro + predicted developments + smart money view]
+```bash
+python apps/analyst-cli/main.py analyze NIFTY --timeframe 15
 ```
 
-## Step 4 — Ask for Confirmation, Then Execute
-After showing the analysis, ask:
-> "Create order in Angel One? (yes/no)"
+It fetches live data, renders the institutional brief, asks Claude Opus 5 with web
+search, validates the answer against the risk mandate, and records it as a paper
+trade. `--print-prompt` shows the exact brief without spending a token.
 
-If YES:
-- Run: `python paper_trading/auto_trade.py --symbol SYMBOL --exchange EXCHANGE --direction LONG/SHORT --lots X --sl XX --target XX`
-- Confirm order ID
-- Monitor runs in background — auto-exits on SL or target hit
+For the deterministic path instead:
 
-## Symbol Format for OpenAlgo
-- NIFTY CE/PE: `NIFTY02JUN2624000PE`  → exchange NFO
-- SENSEX CE/PE: `SENSEX02JUN2674300CE` → exchange BFO
-- Gold Mini: `GOLDM03JUN26` → exchange MCX
+```bash
+python -m tsys.executor.main --index NIFTY --once
+```
 
-## OpenAlgo
-- API key: loaded from `paper_trading/local_config.py` (gitignored) or the
-  `OPENALGO_API_KEY` env var. Never paste the key into this file or any
-  tracked source — see `paper_trading/local_config.example.py`.
-- URL: http://127.0.0.1:5000 (must be running before trading)
+Use the MCP tools directly only for exploration the CLI does not cover — reading a
+custom indicator, taking a screenshot, driving the chart UI.
 
-## Model Note
-Current model: claude-sonnet-4-6. For best analysis switch with `/model claude-opus-4-7`.
-There is no Opus 4.8 yet — Opus 4.7 is the latest as of June 2026.
+## Rules that hold everywhere in this repo
+
+**Only `packages/config` reads the environment.** `scripts/check_env_boundary.py`
+enforces it by AST walk in CI. If you need a setting somewhere, add it to config
+and pass the object down.
+
+**`evaluate()` stays pure.** No config, no clock, no I/O — an explicit
+`EvalParams` in, a `Decision` out. It is the one function whose behaviour must be
+reproducible from a fixture.
+
+**All money is `Decimal`, all datetimes carry `tzinfo`.** Floats accumulate error
+and this code multiplies prices by quantities. `to_ist()` refuses naive datetimes
+rather than guessing.
+
+**One route to the broker.** `packages/broker` is it. Do not add a second place
+that posts to OpenAlgo, however convenient — the kill switch, the mode gate and
+the idempotency ledger all live behind that one door.
+
+**Order placement must stay idempotent.** `client_order_id` is a hash of the
+decision's content. If you change what goes into it, a retry can double-fill.
+
+**Failures are refusals, not guesses.** Stale data, a dead CDP connection, a
+missing price: raise and record. Never substitute a fallback price and trade on it.
+
+## Risk mandate
+
+Defaults in `packages/config/src/tsys/config/risk.py`, overridable from `.env`.
+These are limits, not suggestions — the risk layer rejects breaches and a
+rejection is final.
+
+- Capital ₹3,00,000, fixed, does not compound
+- Risk per trade: max 1% (₹3,000), min 0.25% (₹750)
+- Minimum reward:risk 1:2
+- Max 2 open positions, max 2% total open risk, one position per index
+- Daily loss limit ₹6,000, profit target ₹9,000 — both halt new entries
+- No new entries after 15:00 IST, square off at 15:20 IST
+
+Lot sizes: NIFTY 75 (NFO), BANKNIFTY 35 (NFO), SENSEX 10 (BFO), GOLDM 10 (MCX).
+
+## Kill switch
+
+`data/KILL`. While the file exists, every order path refuses.
+
+```bash
+python scripts/stack.py kill on
+python scripts/stack.py kill off
+```
+
+## Verifying a change
+
+```bash
+npm run check    # ruff + env boundary + Node suite (29) + Python suite (93)
+```
+
+The safety tests are the ones that matter — double-fill on retry, dry-run
+silence, the kill switch stopping an order mid-pipeline, stale data being
+refused. If a change makes one of those fail, the change is wrong, not the test.
+
+## Conventions
+
+- `git mv` for moves, so history survives
+- One logical change per commit; the message says *why*, not *what*
+- Comments explain the reasoning that is not visible in the code — the non-obvious
+  constraint, the failure mode being defended against. Not narration.
+- New shared code goes in `packages/`; user-facing surfaces go in `apps/`
+- `packages/openalgo` is vendored third-party code. Do not refactor its internals.
+
+## Model note
+
+Claude Opus 5 (`claude-opus-5`) is the current model and the analyst default.
+Model IDs are complete as written — never append a date suffix.

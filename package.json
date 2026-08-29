@@ -6,9 +6,22 @@
     "packages/tradingview-mcp"
   ],
   "scripts": {
-    "test": "npm run test --workspace=tradingview-mcp",
-    "test:unit": "npm run test:unit --workspace=tradingview-mcp",
-    "mcp": "npm run start --workspace=tradingview-mcp"
+    "test": "npm run test:node && npm run test:py",
+    "test:node": "turbo test:unit",
+    "test:py": "python -m pytest",
+    "lint": "python -m ruff check .",
+    "lint:fix": "python -m ruff check . --fix",
+    "check": "npm run lint && python scripts/check_env_boundary.py && npm test",
+    "mcp": "npm run start --workspace=tradingview-mcp",
+    "dashboard": "python apps/dashboard/server.py",
+    "status": "python scripts/stack.py status",
+    "analyze": "python apps/analyst-cli/main.py analyze"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "turbo": "^2.9.16"
+  },
+  "packageManager": "npm@10.9.0"
 }
