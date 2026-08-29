@@ -4,17 +4,29 @@ stores trades in trades.json, serves the dashboard on http://127.0.0.1:5050
 """
 
 from flask import Flask, jsonify, request, send_from_directory
-import json, os, time, threading, requests as req
+import json, os, sys, time, threading, requests as req
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 app = Flask(__name__, static_folder=".")
 
 TRADES_FILE   = os.path.join(os.path.dirname(__file__), "trades.json")
 FETCHER_PATH  = os.path.join(os.path.dirname(__file__), "fetch_price.mjs")
 
 # OpenAlgo live price (accurate Angel One feed)
-OPENALGO_HOST = "http://127.0.0.1:5000"
-OPENALGO_KEY  = "97c565e461be8600e2633bd83e4a9907b96356065a5f485c24b1e966a63a6be3"
-PAPER_SYMBOL  = "SENSEX14MAY2574700CE"   # OpenAlgo NFO/BFO format
-PAPER_EXCHANGE = "BFO"                   # BSE F&O
+# The API key is loaded from local_config.py (gitignored) or the OPENALGO_API_KEY
+# environment variable — never hardcode it here.
+OPENALGO_HOST = os.environ.get("OPENALGO_URL", "http://127.0.0.1:5000")
+try:
+    from local_config import OPENALGO_API_KEY as OPENALGO_KEY
+except ImportError:
+    OPENALGO_KEY = os.environ.get("OPENALGO_API_KEY", "")
+PAPER_SYMBOL  = os.environ.get("PAPER_SYMBOL", "SENSEX14MAY2574700CE")
+PAPER_EXCHANGE = os.environ.get("PAPER_EXCHANGE", "BFO")   # BSE F&O
+
+if not OPENALGO_KEY:
+    print("WARNING: No OpenAlgo API key (local_config.py / OPENALGO_API_KEY). "
+          "Falling back to the TradingView CDP price feed.", file=sys.stderr)
 
 _price_cache = {"price": None, "symbol": None, "ts": 0}
 _lock = threading.Lock()
@@ -22,6 +34,8 @@ _lock = threading.Lock()
 
 def fetch_from_openalgo() -> dict:
     """Fetch live quote from Angel One via OpenAlgo — accurate BSE options price."""
+    if not OPENALGO_KEY:
+        return {}
     try:
         from openalgo import api
         client = api(api_key=OPENALGO_KEY, host=OPENALGO_HOST)

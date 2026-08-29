@@ -78,7 +78,9 @@ If YES:
 - Gold Mini: `GOLDM03JUN26` → exchange MCX
 
 ## OpenAlgo
-- API key: `97c565e461be8600e2633bd83e4a9907b96356065a5f485c24b1e966a63a6be3`
+- API key: loaded from `paper_trading/local_config.py` (gitignored) or the
+  `OPENALGO_API_KEY` env var. Never paste the key into this file or any
+  tracked source — see `paper_trading/local_config.example.py`.
 - URL: http://127.0.0.1:5000 (must be running before trading)
 
 ## Model Note

@@ -2,7 +2,6 @@
   "permissions": {
     "allow": [
       "Bash(where ngrok *)",
-      "Bash(.venv\\\\Scripts\\\\python.exe -c \"from pyngrok import ngrok, conf; ngrok.set_auth_token\\('3DGHmKlvAqzmN34mTQVQLM4wjLP_87nhUbYXwQFtsz4RWR2Xq'\\); print\\('Authtoken configured successfully'\\)\")",
       "PowerShell(Tee-Object *)"
     ]
   }

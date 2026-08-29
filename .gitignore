@@ -39,3 +39,6 @@ node_modules/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Structural reference repo (separate git repo, has its own .env) — never commit
+monorepo/
