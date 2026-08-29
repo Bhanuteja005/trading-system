@@ -7,7 +7,11 @@ Usage:
   python parse_trade.py --symbol NIFTY23800CE02JUN26 --exchange NFO  # reads stdin
 """
 
-import argparse, re, sys, os, subprocess
+import argparse
+import os
+import re
+import subprocess
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 

@@ -5,9 +5,8 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
-
 from tsys.config import TradingViewSettings
-from tsys.core import DataUnavailable, StaleData
+from tsys.core import DataUnavailable
 from tsys.domain import MarketSnapshot
 from tsys.tv import TradingViewClient, build_snapshot, parse_bars, parse_quote
 

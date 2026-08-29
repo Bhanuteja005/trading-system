@@ -2,21 +2,21 @@
 
 import json
 from datetime import datetime
-from decimal import Decimal as D
 
-import pytest
 from pydantic import SecretStr
-
 from tsys.broker import BrokerClient, IdempotencyLedger
 from tsys.config import (
-    BaseSettingsBlock, BrokerSettings, Mode, RiskSettings, Settings, TradingViewSettings,
+    BaseSettingsBlock,
+    BrokerSettings,
+    Mode,
+    RiskSettings,
+    Settings,
+    TradingViewSettings,
 )
 from tsys.core import IST
-from tsys.journal import Journal
-from tsys.tv import TradingViewClient
-
 from tsys.executor.pipeline import Pipeline
 from tsys.executor.risk import PortfolioState
+from tsys.journal import Journal
 
 OPEN = datetime(2026, 8, 28, 10, 30, tzinfo=IST)
 
@@ -83,7 +83,7 @@ def test_dry_run_decides_but_sends_nothing(tmp_path, uptrend):
 
 
 def test_chop_produces_no_order_but_is_still_journalled(tmp_path, chop):
-    pipe, settings = build(tmp_path, chop)
+    pipe, _ = build(tmp_path, chop)
     res = pipe.run_once("NIFTY", state=PortfolioState(), now=OPEN)
     assert not res.placed and res.decision.abstain_reason is not None
     lines = list((tmp_path / "journal").glob("*.jsonl"))
@@ -107,7 +107,7 @@ def test_data_failure_ends_the_cycle_without_guessing(tmp_path):
 
 def test_journal_entry_can_reconstruct_the_order(tmp_path, uptrend):
     pipe, _ = build(tmp_path, uptrend)
-    res = pipe.run_once("NIFTY", state=PortfolioState(), now=OPEN)
+    pipe.run_once("NIFTY", state=PortfolioState(), now=OPEN)
     record = json.loads(next((tmp_path / "journal").glob("*.jsonl")).read_text().strip())
 
     assert record["index"] == "NIFTY"

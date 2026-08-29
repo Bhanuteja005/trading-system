@@ -17,10 +17,16 @@ Arguments:
   --product    MIS (default, intraday) or NRML (overnight)
 """
 
-import argparse, time, json, sys, os, subprocess
+import argparse
+import contextlib
+import json
+import os
+import subprocess
+import sys
+import time
 from datetime import datetime
-import requests
 
+import requests
 from tsys.config import settings
 from tsys.core import IST
 
@@ -52,12 +58,12 @@ def log(msg):
 def save_trade(record):
     records = []
     if os.path.exists(LOG_FILE):
-        try:
-            records = json.load(open(LOG_FILE))
-        except Exception:
-            pass
+        with contextlib.suppress(OSError, json.JSONDecodeError), open(LOG_FILE) as fh:
+            records = json.load(fh)
     records.append(record)
-    json.dump(records, open(LOG_FILE, "w"), indent=2)
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    with open(LOG_FILE, "w") as fh:
+        json.dump(records, fh, indent=2)
 
 
 def place_order(action, symbol, exchange, qty, product="MIS"):
@@ -126,7 +132,7 @@ def run(symbol, exchange, direction, lots, lot_size, sl, target, product):
     action = "BUY" if direction.upper() == "LONG" else "SELL"
     exit_action = "SELL" if action == "BUY" else "BUY"
 
-    log(f"=== Claude Institutional Trader ===")
+    log("=== Claude Institutional Trader ===")
     log(f"Symbol   : {symbol} ({exchange})")
     log(f"Direction: {direction}  |  Lots: {lots}  |  Qty: {qty}")
     log(f"SL       : {sl}  |  Target: {target}")

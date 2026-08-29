@@ -2,11 +2,9 @@
 
 from decimal import Decimal
 
-from tsys.domain import Abstain, Action, Side
-
-from tsys.executor.evaluate import EvalParams, evaluate
-
 from conftest import make_snapshot
+from tsys.domain import Abstain, Action, Side
+from tsys.executor.evaluate import EvalParams, evaluate
 
 P = EvalParams()
 

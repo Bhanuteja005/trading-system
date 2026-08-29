@@ -11,7 +11,6 @@ import logging
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from decimal import Decimal
 
 from tsys.broker import BrokerClient
 from tsys.config import LOT_SIZES, Settings
@@ -24,7 +23,14 @@ from tsys.core import (
     get_logger,
     log_event,
 )
-from tsys.domain import Action, Decision, MarketSnapshot, OrderAction, OrderRequest, OrderResult, Side
+from tsys.domain import (
+    Action,
+    Decision,
+    OrderAction,
+    OrderRequest,
+    OrderResult,
+    Side,
+)
 from tsys.journal import Journal, JournalEntry
 from tsys.tv import TradingViewClient
 

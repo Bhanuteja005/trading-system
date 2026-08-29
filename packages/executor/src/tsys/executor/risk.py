@@ -58,7 +58,10 @@ def check(
         )
 
     if len(state.open_positions) >= settings.max_open_positions:
-        return f"already holding {len(state.open_positions)} positions (max {settings.max_open_positions})"
+        return (
+            f"already holding {len(state.open_positions)} positions "
+            f"(max {settings.max_open_positions})"
+        )
 
     if any(p.symbol.startswith(index) for p in state.open_positions):
         return f"already exposed to {index}"

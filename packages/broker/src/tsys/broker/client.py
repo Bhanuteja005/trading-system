@@ -13,16 +13,17 @@ from pathlib import Path
 from typing import Any
 
 import requests
-
 from tsys.config import BrokerSettings, Mode
 from tsys.core import (
     BrokerError,
     DataUnavailable,
     KillSwitchEngaged,
-    client_order_id as make_id,
     get_logger,
     log_event,
     with_retry,
+)
+from tsys.core import (
+    client_order_id as make_id,
 )
 from tsys.domain import OrderRequest, OrderResult, Quote
 

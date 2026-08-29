@@ -1,7 +1,6 @@
 from decimal import Decimal as D
 
 import pytest
-
 from tsys.domain import Abstain, Action, Decision, Levels, Side
 
 

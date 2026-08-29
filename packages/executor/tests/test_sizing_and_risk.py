@@ -4,7 +4,6 @@ from decimal import Decimal as D
 from tsys.config import RiskSettings
 from tsys.core import IST
 from tsys.domain import Levels, Position, Side
-
 from tsys.executor.risk import PortfolioState, check
 from tsys.executor.sizing import size_position
 

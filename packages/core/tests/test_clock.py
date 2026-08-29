@@ -1,7 +1,6 @@
 from datetime import UTC, datetime, time
 
 import pytest
-
 from tsys.core import IST, is_market_open, past_square_off, session_date, to_ist
 
 

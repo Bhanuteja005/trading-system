@@ -13,6 +13,7 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 # packages/config/src/tsys/config/base.py -> up 5 to the repo root.
 # Anchored on a marker file so a moved package fails loudly instead of
 # silently resolving data/ and the kill switch to the wrong directory.

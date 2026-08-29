@@ -14,7 +14,7 @@ import sys
 import time
 
 from tsys.broker import BrokerClient, IdempotencyLedger
-from tsys.config import Mode, settings
+from tsys.config import settings
 from tsys.core import clock, configure, get_logger
 from tsys.journal import Journal
 from tsys.tv import TradingViewClient

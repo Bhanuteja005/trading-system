@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  node:
+    name: tradingview-mcp (Node)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run test:unit
+
+  python:
+    name: packages + apps (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: uv sync --all-packages
+
+      - name: Environment boundary
+        run: uv run python scripts/check_env_boundary.py
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Tests
+        run: uv run pytest
+
+      # Live trading is only reachable if the paper path demonstrably works.
+      - name: Paper path end to end
+        env:
+          TSYS_MODE: paper
+          OPENALGO_API_KEY: ci-placeholder
+        run: uv run pytest packages/executor/tests/test_pipeline.py -q
+
+      - name: Assert dry-run is the default
+        run: |
+          uv run python - <<'PY'
+          from tsys.config import get_settings
+          s = get_settings()
+          assert s.risk.mode.value == "dry_run", f"default mode is {s.risk.mode}"
+          assert not s.risk.is_live, "is_live must be False without explicit opt-in"
+          print("default mode is dry_run, live requires explicit opt-in")
+          PY
+
+  secrets:
+    name: No committed secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan tracked files for secret-shaped assignments
+        run: |
+          if git grep -nIE "(api[_-]?key|apikey|secret|token|authtoken)[\"']?[[:space:]]*[:=][[:space:]]*[\"'][A-Za-z0-9_/+=-]{20,}[\"']" \
+               -- . ':!packages/openalgo' ':!*.lock' ':!package-lock.json'; then
+            echo "::error::secret-shaped literal found in a tracked file"
+            exit 1
+          fi
+          echo "no secret-shaped literals outside vendored code"

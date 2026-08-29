@@ -2,11 +2,12 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
-
 from tsys.domain import Bar, MarketSnapshot, Quote
 
 
-def make_bars(closes: list[str], *, start: datetime | None = None, spread: str = "5") -> tuple[Bar, ...]:
+def make_bars(
+    closes: list[str], *, start: datetime | None = None, spread: str = "5"
+) -> tuple[Bar, ...]:
     t0 = start or datetime(2026, 8, 28, 4, 0, tzinfo=UTC)
     s = Decimal(spread)
     out = []
@@ -21,7 +22,9 @@ def make_bars(closes: list[str], *, start: datetime | None = None, spread: str =
     return tuple(out)
 
 
-def make_snapshot(closes: list[str], *, index: str = "NIFTY", last: str | None = None) -> MarketSnapshot:
+def make_snapshot(
+    closes: list[str], *, index: str = "NIFTY", last: str | None = None
+) -> MarketSnapshot:
     bars = make_bars(closes)
     now = datetime.now(UTC)
     return MarketSnapshot(

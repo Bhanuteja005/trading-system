@@ -8,16 +8,13 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import TypeVar
 
 from .errors import BrokerError, DataUnavailable
-
-T = TypeVar("T")
 
 RETRYABLE = (DataUnavailable, TimeoutError, ConnectionError)
 
 
-def with_retry(
+def with_retry[T](
     fn: Callable[[], T],
     *,
     attempts: int = 3,

@@ -12,12 +12,10 @@ import subprocess
 import threading
 import time
 from collections import deque
-from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
-
 from tsys.config import LOT_SIZES, settings
 from tsys.core import clock, configure, get_logger
 from tsys.journal import Journal
@@ -30,7 +28,8 @@ DATA = settings.base.data_dir
 JOURNAL = Journal(DATA / "journal")
 TRADES_FILE = DATA / "trades.json"
 LEGACY_FETCHER = (
-    settings.base.repo_root / "packages" / "tradingview-mcp" / "scripts" / "legacy" / "fetch_price.mjs"
+    settings.base.repo_root
+    / "packages" / "tradingview-mcp" / "scripts" / "legacy" / "fetch_price.mjs"
 )
 
 app = Flask(__name__, static_folder=str(HERE))

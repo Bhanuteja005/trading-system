@@ -1,5 +1,4 @@
 import pytest
-
 from tsys.core import DataUnavailable, with_retry
 from tsys.core.errors import BrokerError
 

@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 import requests
 from pydantic import SecretStr
-
 from tsys.broker import BrokerClient, IdempotencyLedger
 from tsys.config import BrokerSettings, Mode
 from tsys.core import KillSwitchEngaged
@@ -32,7 +31,10 @@ class FakeSession:
 
     def post(self, url, json=None, timeout=None):
         self.calls.append((url, json))
-        r = self._responses.pop(0) if self._responses else FakeResponse({"status": "success", "orderid": "X1"})
+        if self._responses:
+            r = self._responses.pop(0)
+        else:
+            r = FakeResponse({"status": "success", "orderid": "X1"})
         if isinstance(r, Exception):
             raise r
         return r

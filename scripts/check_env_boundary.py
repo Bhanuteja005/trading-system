@@ -16,6 +16,9 @@ ALLOWED = {ROOT / "packages" / "config" / "src" / "tsys" / "config"}
 SKIP_PARTS = {
     "packages/openalgo", "monorepo", "node_modules", ".venv",
     "__pycache__", "scripts/check_env_boundary.py",
+    # The launcher composes PYTHONPATH for child processes. It reads no secrets
+    # and holds no config; the rule it exists to protect is untouched.
+    "scripts/stack.py",
 }
 
 
@@ -39,10 +42,14 @@ def violations() -> list[str]:
             continue
         for node in ast.walk(tree):
             # os.environ / os.getenv / os.environ.get
-            if isinstance(node, ast.Attribute) and node.attr in {"environ", "getenv"}:
-                if isinstance(node.value, ast.Name) and node.value.id == "os":
-                    rel = path.relative_to(ROOT).as_posix()
-                    found.append(f"{rel}:{node.lineno}: os.{node.attr} outside packages/config")
+            if (
+                isinstance(node, ast.Attribute)
+                and node.attr in {"environ", "getenv"}
+                and isinstance(node.value, ast.Name)
+                and node.value.id == "os"
+            ):
+                rel = path.relative_to(ROOT).as_posix()
+                found.append(f"{rel}:{node.lineno}: os.{node.attr} outside packages/config")
     return found
 
 
