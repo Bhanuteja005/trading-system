@@ -1,0 +1,27 @@
+# Virtual workspace root — the root itself is not a distributable package.
+# packages/openalgo is deliberately EXCLUDED: it is vendored third-party code
+# with its own pyproject/.venv and must not be refactored or co-resolved.
+[tool.uv.workspace]
+members = ["packages/config", "packages/core", "packages/domain", "packages/broker",
+           "packages/tvclient", "packages/journal", "packages/executor", "apps/*"]
+exclude = ["packages/openalgo", "monorepo"]
+
+[tool.uv.sources]
+tsys-config = { workspace = true }
+tsys-core = { workspace = true }
+tsys-domain = { workspace = true }
+tsys-broker = { workspace = true }
+tsys-tvclient = { workspace = true }
+tsys-journal = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["packages/openalgo", "monorepo"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["packages", "apps"]
+addopts = "-q"

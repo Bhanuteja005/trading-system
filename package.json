@@ -1,0 +1,14 @@
+{
+  "name": "trading-system",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/tradingview-mcp"
+  ],
+  "scripts": {
+    "test": "npm run test --workspace=tradingview-mcp",
+    "test:unit": "npm run test:unit --workspace=tradingview-mcp",
+    "mcp": "npm run start --workspace=tradingview-mcp"
+  },
+  "engines": { "node": ">=20" }
+}
