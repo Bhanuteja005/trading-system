@@ -1,57 +1,75 @@
+"""Place a single order by hand, through the same guarded path the executor uses.
+
+    python apps/trader-cli/place_order.py BUY NIFTY02JUN2624000PE NFO 300 MIS
+
+Honours TSYS_MODE: in dry_run (the default) it prints the order and sends
+nothing. The kill switch and the idempotency ledger apply here too — this is a
+front end onto BrokerClient, not a second way into the broker.
 """
-Quick order placer for Claude-analyzed trades.
-Usage: python place_order.py BUY NIFTY02JUN2624000PE NFO 300 MIS
-       python place_order.py SELL NIFTY02JUN2624000PE NFO 300 MIS
-"""
-import sys, os, requests, json
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from __future__ import annotations
 
-OPENALGO_URL = "http://127.0.0.1:5000/api/v1/placeorder"
-# API key is loaded from local_config.py (gitignored) or the OPENALGO_API_KEY
-# environment variable — never hardcode it here.
-try:
-    from local_config import OPENALGO_API_KEY as API_KEY
-except ImportError:
-    API_KEY = os.environ.get("OPENALGO_API_KEY", "")
-STRATEGY     = "ClaudeTrader"
+import argparse
+import sys
+from datetime import date
+from decimal import Decimal
 
-if not API_KEY:
-    print("ERROR: No OpenAlgo API key. Create paper_trading/local_config.py "
-          "(copy from local_config.example.py) or set OPENALGO_API_KEY env var.")
-    sys.exit(1)
+from tsys.broker import BrokerClient, IdempotencyLedger
+from tsys.config import settings
+from tsys.core import KillSwitchEngaged, TsysError, client_order_id, configure
+from tsys.domain import OrderAction, OrderRequest, Product
 
-def place(action, symbol, exchange, qty, product="MIS"):
-    payload = {
-        "apikey":    API_KEY,
-        "strategy":  STRATEGY,
-        "symbol":    symbol,
-        "action":    action.upper(),
-        "exchange":  exchange.upper(),
-        "pricetype": "MARKET",
-        "product":   product.upper(),
-        "quantity":  str(qty),
-    }
+
+def main() -> int:
+    p = argparse.ArgumentParser(description="Place one order via OpenAlgo.")
+    p.add_argument("action", choices=["BUY", "SELL"], type=str.upper)
+    p.add_argument("symbol")
+    p.add_argument("exchange", type=str.upper)
+    p.add_argument("quantity", type=int)
+    p.add_argument("product", nargs="?", default="MIS", choices=["MIS", "NRML"], type=str.upper)
+    p.add_argument("--ref", default="manual", help="disambiguates two identical manual orders")
+    args = p.parse_args()
+
+    configure(settings.base.log_level)
+    settings.assert_startup_safe()
+
+    coid = client_order_id(
+        index=args.symbol, side=args.action, entry=Decimal(1),
+        stop_loss=Decimal(1), target=Decimal(1),
+        session=date.today(), sequence=abs(hash(args.ref)) % 10_000,
+    )
+    req = OrderRequest(
+        client_order_id=coid, symbol=args.symbol, exchange=args.exchange,
+        action=OrderAction(args.action), quantity=args.quantity,
+        product=Product(args.product),
+    )
+
+    client = BrokerClient(
+        settings.broker,
+        mode=settings.risk.mode,
+        kill_switch=settings.risk.kill_switch_file,
+        ledger=IdempotencyLedger(settings.base.data_dir / "order_ledger.json"),
+    )
+
+    print(f"mode={settings.risk.mode.value}  contacts broker={client.will_contact_broker}")
     try:
-        r = requests.post(OPENALGO_URL, json=payload, timeout=5)
-        resp = r.json()
-        if resp.get("status") == "success":
-            print(f"ORDER PLACED: {action} {qty} x {symbol} | Order ID: {resp.get('orderid')}")
-        else:
-            print(f"ORDER FAILED: {resp}")
-        return resp
-    except Exception as e:
-        print(f"ERROR: {e}")
-        return {}
+        res = client.place_order(req)
+    except KillSwitchEngaged as e:
+        print(f"BLOCKED: {e}", file=sys.stderr)
+        return 2
+    except TsysError as e:
+        print(f"FAILED: {e}", file=sys.stderr)
+        return 1
+
+    if res.deduplicated:
+        print(f"DUPLICATE suppressed — existing order {res.broker_order_id}")
+    elif res.ok:
+        print(f"OK  {args.action} {args.quantity} x {args.symbol} -> {res.broker_order_id}")
+    else:
+        print(f"REJECTED: {res.error}", file=sys.stderr)
+        return 1
+    return 0
+
 
 if __name__ == "__main__":
-    if len(sys.argv) < 5:
-        print("Usage: python place_order.py ACTION SYMBOL EXCHANGE QTY [PRODUCT]")
-        print("Example: python place_order.py BUY NIFTY02JUN2624000PE NFO 300 MIS")
-        sys.exit(1)
-    action   = sys.argv[1]
-    symbol   = sys.argv[2]
-    exchange = sys.argv[3]
-    qty      = int(sys.argv[4])
-    product  = sys.argv[5] if len(sys.argv) > 5 else "MIS"
-    place(action, symbol, exchange, qty, product)
+    raise SystemExit(main())

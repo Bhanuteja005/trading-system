@@ -6,7 +6,7 @@ stores trades in trades.json, serves the dashboard on http://127.0.0.1:5050
 from flask import Flask, jsonify, request, send_from_directory
 import json, os, sys, time, threading, requests as req
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from tsys.config import settings
 
 app = Flask(__name__, static_folder=".")
 
@@ -15,20 +15,15 @@ FETCHER_PATH  = os.path.join(_REPO_ROOT, "packages", "tradingview-mcp",
                              "scripts", "legacy", "fetch_price.mjs")
 TRADES_FILE   = os.path.join(_REPO_ROOT, "data", "trades.json")
 
-# OpenAlgo live price (accurate Angel One feed)
-# The API key is loaded from local_config.py (gitignored) or the OPENALGO_API_KEY
-# environment variable — never hardcode it here.
-OPENALGO_HOST = os.environ.get("OPENALGO_URL", "http://127.0.0.1:5000")
-try:
-    from local_config import OPENALGO_API_KEY as OPENALGO_KEY
-except ImportError:
-    OPENALGO_KEY = os.environ.get("OPENALGO_API_KEY", "")
-PAPER_SYMBOL  = os.environ.get("PAPER_SYMBOL", "SENSEX14MAY2574700CE")
-PAPER_EXCHANGE = os.environ.get("PAPER_EXCHANGE", "BFO")   # BSE F&O
+# Config comes from tsys.config; this module never reads the environment itself.
+_OPENALGO_HOST = settings.broker.url
+_OPENALGO_KEY = settings.broker.api_key.get_secret_value()
+PAPER_SYMBOL = "SENSEX14MAY2574700CE"
+PAPER_EXCHANGE = "BFO"   # BSE F&O
 
-if not OPENALGO_KEY:
-    print("WARNING: No OpenAlgo API key (local_config.py / OPENALGO_API_KEY). "
-          "Falling back to the TradingView CDP price feed.", file=sys.stderr)
+if not settings.broker.configured:
+    print("WARNING: no OpenAlgo API key configured; falling back to the "
+          "TradingView CDP price feed.", file=sys.stderr)
 
 _price_cache = {"price": None, "symbol": None, "ts": 0}
 _lock = threading.Lock()
@@ -36,11 +31,11 @@ _lock = threading.Lock()
 
 def fetch_from_openalgo() -> dict:
     """Fetch live quote from Angel One via OpenAlgo — accurate BSE options price."""
-    if not OPENALGO_KEY:
+    if not settings.broker.configured:
         return {}
     try:
         from openalgo import api
-        client = api(api_key=OPENALGO_KEY, host=OPENALGO_HOST)
+        client = api(api_key=_OPENALGO_KEY, host=_OPENALGO_HOST)
         result = client.quotes(symbol=PAPER_SYMBOL, exchange=PAPER_EXCHANGE)
         if isinstance(result, dict) and result.get("status") == "success":
             ltp = result["data"].get("ltp") or result["data"].get("last_price")

@@ -20,25 +20,21 @@ Arguments:
 import argparse, time, json, sys, os, subprocess
 from datetime import datetime
 import requests
-import pytz
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from tsys.config import settings
+from tsys.core import IST
 
-OPENALGO_URL = "http://127.0.0.1:5000"
-# API key is loaded from local_config.py (gitignored) or the OPENALGO_API_KEY
-# environment variable — never hardcode it here.
-try:
-    from local_config import OPENALGO_API_KEY as API_KEY
-except ImportError:
-    API_KEY = os.environ.get("OPENALGO_API_KEY", "")
-STRATEGY     = "ClaudeTrader"
+# Config is read once, at the boundary. This module never touches os.environ.
+OPENALGO_URL = settings.broker.url
+API_KEY      = settings.broker.api_key.get_secret_value()
+STRATEGY     = settings.broker.strategy_tag
 
-if not API_KEY:
-    sys.exit("ERROR: No OpenAlgo API key. Create paper_trading/local_config.py "
-             "(copy from local_config.example.py) or set OPENALGO_API_KEY env var.")
-IST          = pytz.timezone("Asia/Kolkata")
-LOG_FILE     = os.path.join(_REPO_ROOT, "data", "trade_log.json")
+if not settings.broker.configured:
+    sys.exit("ERROR: No OpenAlgo API key. Set OPENALGO_API_KEY in .env "
+             "(copy .env.example) before trading.")
+
 _REPO_ROOT   = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+LOG_FILE     = os.path.join(_REPO_ROOT, "data", "trade_log.json")
 FETCH_MJS    = os.path.join(_REPO_ROOT, "packages", "tradingview-mcp",
                             "scripts", "legacy", "fetch_price.mjs")
 POLL_SECS    = 20   # price check interval
